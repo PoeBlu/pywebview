@@ -143,19 +143,22 @@ class Browser:
 
 
 def find_instance(browser):
-    for instance in instances.values():
-        if instance.browser is browser:
-            return instance
-
-    return None
+    return next(
+        (
+            instance
+            for instance in instances.values()
+            if instance.browser is browser
+        ),
+        None,
+    )
 
 
 class LoadHandler(object):
     def OnBeforePopup(self, **args):
-        url = args['target_url']
         user_gesture = args['user_gesture']
 
         if user_gesture:
+            url = args['target_url']
             webbrowser.open(url)
 
         return True
@@ -163,13 +166,13 @@ class LoadHandler(object):
     def OnLoadingStateChange(self, browser, is_loading, **_):
         instance = find_instance(browser)
 
-        if instance is not None:
-            if is_loading:
-                instance.initialized = False
-            else:
-                instance.initialize()
+        if instance is None:
+            logger.debug(f'CEF instance is not found {browser} ')
+
+        elif is_loading:
+            instance.initialized = False
         else:
-            logger.debug('CEF instance is not found %s ' % browser)
+            instance.initialize()
 
 
 def _cef_call(func):
@@ -205,11 +208,13 @@ def init(window):
             settings['remote_debugging_port'] = -1
 
         try: # set paths under Pyinstaller's one file mode
-            settings.update({
+            settings |= {
                 'resources_dir_path': sys._MEIPASS,
                 'locales_dir_path': os.path.join(sys._MEIPASS, 'locales'),
-                'browser_subprocess_path': os.path.join(sys._MEIPASS, 'subprocess.exe'),
-            })
+                'browser_subprocess_path': os.path.join(
+                    sys._MEIPASS, 'subprocess.exe'
+                ),
+            }
         except Exception:
             pass
 
@@ -263,10 +268,7 @@ def get_current_url(uid):
     instance = instances[uid]
     url = instance.get_current_url()
 
-    if url.startswith('data:text/html,'):
-        return None
-    else:
-        return url
+    return None if url.startswith('data:text/html,') else url
 
 
 @_cef_call

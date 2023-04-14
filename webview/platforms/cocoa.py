@@ -152,22 +152,23 @@ class BrowserView:
 
             """ Disable back navigation on pressing the Delete key: """
             # Check if the requested navigation action is Back/Forward
-            if action.navigationType() == getattr(WebKit, 'WKNavigationTypeBackForward', 2):
-                # Check if the event is a Delete key press (keyCode = 51)
-                if event and event.type() == AppKit.NSKeyDown and event.keyCode() == 51:
-                    # If so, ignore the request and return
-                    handler(getattr(WebKit, 'WKNavigationActionPolicyCancel', 0))
-                    return
+            if (
+                action.navigationType()
+                == getattr(WebKit, 'WKNavigationTypeBackForward', 2)
+                and event
+                and event.type() == AppKit.NSKeyDown
+                and event.keyCode() == 51
+            ):
+                # If so, ignore the request and return
+                handler(getattr(WebKit, 'WKNavigationActionPolicyCancel', 0))
+                return
 
             # Normal navigation, allow
             handler(getattr(WebKit, 'WKNavigationActionPolicyAllow', 1))
 
         # Show the webview when it finishes loading
         def webView_didFinishNavigation_(self, webview, nav):
-            # Add the webview to the window if it's not yet the contentView
-            i = BrowserView.get_instance('webkit', webview)
-
-            if i:
+            if i := BrowserView.get_instance('webkit', webview):
                 if not webview.window():
                     i.window.setContentView_(webview)
                     i.window.makeFirstResponder_(webview)
@@ -261,35 +262,39 @@ class BrowserView:
             :return:
             """
 
-            if theEvent.type() == AppKit.NSKeyDown and theEvent.modifierFlags() & AppKit.NSCommandKeyMask:
-                responder = self.window().firstResponder()
-                keyCode = theEvent.keyCode()
+            if (
+                theEvent.type() != AppKit.NSKeyDown
+                or not theEvent.modifierFlags() & AppKit.NSCommandKeyMask
+            ):
+                return
+            responder = self.window().firstResponder()
+            keyCode = theEvent.keyCode()
 
-                if responder != None:
-                    handled = False
-                    range_ = responder.selectedRange()
-                    hasSelectedText = len(range_) > 0
+            if responder != None:
+                handled = False
+                range_ = responder.selectedRange()
+                hasSelectedText = len(range_) > 0
 
-                    if keyCode == 7 and hasSelectedText : #cut
-                        responder.cut_(self)
+                if keyCode == 7 and hasSelectedText : #cut
+                    responder.cut_(self)
+                    handled = True
+                elif keyCode == 8 and hasSelectedText:  #copy
+                    responder.copy_(self)
+                    handled = True
+                elif keyCode == 9:  # paste
+                    responder.paste_(self)
+                    handled = True
+                elif keyCode == 0:  # select all
+                    responder.selectAll_(self)
+                    handled = True
+                elif keyCode == 6:  # undo
+                    if responder.undoManager().canUndo():
+                        responder.undoManager().undo()
                         handled = True
-                    elif keyCode == 8 and hasSelectedText:  #copy
-                        responder.copy_(self)
-                        handled = True
-                    elif keyCode == 9:  # paste
-                        responder.paste_(self)
-                        handled = True
-                    elif keyCode == 0:  # select all
-                        responder.selectAll_(self)
-                        handled = True
-                    elif keyCode == 6:  # undo
-                        if responder.undoManager().canUndo():
-                            responder.undoManager().undo()
-                            handled = True
-                    elif keyCode == 12:  # quit
-                        BrowserView.app.stop_(self)
+                elif keyCode == 12:  # quit
+                    BrowserView.app.stop_(self)
 
-                    return handled
+                return handled
 
 
     def __init__(self, window):
@@ -433,11 +438,7 @@ class BrowserView:
 
     def toggle_fullscreen(self):
         def toggle():
-            if self.is_fullscreen:
-                window_behaviour = 1 << 2  # NSWindowCollectionBehaviorManaged
-            else:
-                window_behaviour = 1 << 7  # NSWindowCollectionBehaviorFullScreenPrimary
-
+            window_behaviour = 1 << 2 if self.is_fullscreen else 1 << 7
             self.window.setCollectionBehavior_(window_behaviour)
             self.window.toggleFullScreen_(None)
 
@@ -656,7 +657,7 @@ class BrowserView:
         :rtype: str
         """
         if "CFBundleName" in info:
-            val += " {}".format(info["CFBundleName"])
+            val += f' {info["CFBundleName"]}'
         return val
 
     @staticmethod
@@ -706,10 +707,7 @@ class BrowserView:
         alert.setMessageText_(message)
         alert.setAlertStyle_(AppKit.NSWarningAlertStyle)
 
-        if alert.runModal() == AppKit.NSAlertFirstButtonReturn:
-            return True
-        else:
-            return False
+        return alert.runModal() == AppKit.NSAlertFirstButtonReturn
 
     @staticmethod
     def print_webview(webview):

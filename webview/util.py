@@ -46,16 +46,13 @@ def base_uri(relative_path=''):
             base_path = os.path.dirname(os.path.realpath(sys.argv[0]))
 
     if not os.path.exists(base_path):
-        raise ValueError('Path %s does not exist' % base_path)
+        raise ValueError(f'Path {base_path} does not exist')
 
-    return 'file://%s' % os.path.join(base_path, relative_path)
+    return f'file://{os.path.join(base_path, relative_path)}'
 
 
 def convert_string(string):
-    if sys.version < '3':
-        return unicode(string)
-    else:
-        return str(string)
+    return unicode(string) if sys.version < '3' else str(string)
 
 
 def parse_file_type(file_type):
@@ -64,10 +61,8 @@ def parse_file_type(file_type):
     :return: (description, file extensions) tuple
     '''
     valid_file_filter = r'^([\w ]+)\((\*(?:\.(?:\w+|\*))*(?:;\*\.\w+)*)\)$'
-    match = re.search(valid_file_filter, file_type)
-
-    if match:
-        return match.group(1).rstrip(), match.group(2)
+    if match := re.search(valid_file_filter, file_type):
+        return match[1].rstrip(), match[2]
     else:
         raise ValueError('{0} is not a valid file filter'.format(file_type))
 
@@ -100,7 +95,7 @@ def js_bridge_call(window, func_name, param, value_id):
 
     if func is not None:
         try:
-            func_params = param if not param else json.loads(param)
+            func_params = json.loads(param) if param else param
             t = Thread(target=_call)
             t.start()
         except Exception:
@@ -118,10 +113,7 @@ def escape_string(string):
 
 
 def transform_url(url):
-    if url and '://' not in url:
-        return base_uri(url)
-    else:
-        return url
+    return base_uri(url) if url and '://' not in url else url
 
 
 def make_unicode(string):
@@ -143,25 +135,20 @@ def escape_line_breaks(string):
 
 def inject_base_uri(content, base_uri):
     pattern = r'<%s(?:[\s]+[^>]*|)>'
-    base_tag = '<base href="%s">' % base_uri
+    base_tag = f'<base href="{base_uri}">'
 
-    match = re.search(pattern % 'base', content)
-
-    if match:
+    if match := re.search(pattern % 'base', content):
         return content
 
-    match = re.search(pattern % 'head', content)
-    if match:
+    if match := re.search(pattern % 'head', content):
         tag = match.group()
         return content.replace(tag, tag + base_tag)
 
-    match = re.search(pattern % 'html', content)
-    if match:
+    if match := re.search(pattern % 'html', content):
         tag = match.group()
         return content.replace(tag, tag + base_tag)
 
-    match = re.search(pattern % 'body', content)
-    if match:
+    if match := re.search(pattern % 'body', content):
         tag = match.group()
         return content.replace(tag, base_tag + tag)
 
@@ -190,5 +177,5 @@ def interop_dll_path(dll_name):
     except Exception:
         pass
 
-    raise Exception('Cannot find %s' % dll_name)
+    raise Exception(f'Cannot find {dll_name}')
 

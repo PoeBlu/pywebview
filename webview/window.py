@@ -249,7 +249,7 @@ class Window:
             filetypes = ('Description (*.extension[;*.extension[;...]])', ...)
         :return: A tuple of selected files, None if cancelled.
         """
-        if type(file_types) != tuple and type(file_types) != list:
+        if type(file_types) not in [tuple, list]:
             raise TypeError('file_types must be a tuple of strings')
         for f in file_types:
             parse_file_type(f)

@@ -127,7 +127,7 @@ def create_window(title, url=None, html=None, js_api=None, width=800, height=600
     if not re.match(valid_color, background_color):
         raise ValueError('{0} is not a valid hex triplet color'.format(background_color))
 
-    uid = 'master' if len(windows) == 0 else 'child_' + uuid4().hex[:8]
+    uid = 'master' if len(windows) == 0 else f'child_{uuid4().hex[:8]}'
 
     window = Window(uid, make_unicode(title), transform_url(url), html,
                     width, height, x, y, resizable, fullscreen, min_size, hidden, frameless,

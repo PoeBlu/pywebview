@@ -83,7 +83,7 @@ def initialize(forced_gui=None):
         if not try_import(guis):
             raise WebViewException('You must have either PyObjC (for Cocoa support) or Qt with Python bindings installed in order to use pywebview.')
 
-    elif platform.system() == 'Linux' or platform.system() == 'OpenBSD':
+    elif platform.system() in ['Linux', 'OpenBSD']:
         if forced_gui == 'qt':
             guis = [import_qt, import_gtk]
         else:

@@ -5,6 +5,7 @@ Licensed under BSD license
 http://github.com/r0x0r/pywebview/
 '''
 
+
 import os
 import platform
 import json
@@ -28,7 +29,7 @@ logger = logging.getLogger('pywebview')
 from PyQt5 import QtCore
 from PyQt5.QtCore import QT_VERSION_STR
 
-logger.debug('Using Qt %s' % QT_VERSION_STR)
+logger.debug(f'Using Qt {QT_VERSION_STR}')
 
 from PyQt5.QtWidgets import QWidget, QMainWindow, QVBoxLayout, QApplication, QFileDialog, QMessageBox, QAction
 from PyQt5.QtGui import QColor
@@ -105,14 +106,14 @@ class BrowserView(QMainWindow):
 
         # Create a new webview window pointing at the Remote debugger server
         def show_inspector(self):
-            uid = self.parent().uid + '-inspector'
+            uid = f'{self.parent().uid}-inspector'
             try:
                 # If inspector already exists, bring it to the front
                 BrowserView.instances[uid].raise_()
                 BrowserView.instances[uid].activateWindow()
             except KeyError:
-                title = 'Web Inspector - {}'.format(self.parent().title)
-                url = 'http://localhost:{}'.format(BrowserView.inspector_port)
+                title = f'Web Inspector - {self.parent().title}'
+                url = f'http://localhost:{BrowserView.inspector_port}'
                 window = Window('web_inspector', title, url, '', 700, 500, None, None, True, False,
                                 (300, 200), False, False, False, False, '#fff', None, False)
 
@@ -310,9 +311,9 @@ class BrowserView(QMainWindow):
         if self.pywebview_window in windows:
             windows.remove(self.pywebview_window)
 
-        try:    # Close inspector if open
-            BrowserView.instances[self.uid + '-inspector'].close()
-            del BrowserView.instances[self.uid + '-inspector']
+        try:# Close inspector if open
+            BrowserView.instances[f'{self.uid}-inspector'].close()
+            del BrowserView.instances[f'{self.uid}-inspector']
         except KeyError:
             pass
 
@@ -411,10 +412,7 @@ class BrowserView(QMainWindow):
             file_names = tuple(self._file_name[0])
 
         # Check if we got an empty tuple, or a tuple with empty string
-        if len(file_names) == 0 or len(file_names[0]) == 0:
-            return None
-        else:
-            return file_names
+        return None if len(file_names) == 0 or len(file_names[0]) == 0 else file_names
 
     def hide_(self):
         self.hide_trigger.emit()

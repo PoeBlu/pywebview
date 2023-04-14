@@ -278,7 +278,7 @@ class BrowserView:
             if self.httpd:
                 self.httpd.shutdown()
 
-            url, httpd = start_server('file://' + self.temp_html)
+            url, httpd = start_server(f'file://{self.temp_html}')
             self.ishtml = True
             self.web_view.Navigate(url)
 
@@ -311,7 +311,7 @@ class BrowserView:
                     shutil.rmtree(self.tmpdir)
                     self.tmpdir = None
             except Exception as e:
-                logger.exception('Failed deleting %s' % self.tmpdir)
+                logger.exception(f'Failed deleting {self.tmpdir}')
 
             url = str(args.Uri)
             self.url = None if self.ishtml else url
@@ -597,11 +597,7 @@ def _allow_localhost():
             si = None
             env = None
 
-        if include_stdout:
-            ret = {'stdout': subprocess.PIPE}
-        else:
-            ret = {}
-
+        ret = {'stdout': subprocess.PIPE} if include_stdout else {}
         ret.update({'stdin': subprocess.PIPE,
                     'stderr': subprocess.PIPE,
                     'startupinfo': si,
@@ -711,11 +707,7 @@ def create_file_dialog(dialog_type, directory, allow_multiple, save_filename, fi
             dialog.FileName = save_filename
 
             result = dialog.ShowDialog(window)
-            if result == WinForms.DialogResult.OK:
-                file_path = dialog.FileName
-            else:
-                file_path = None
-
+            file_path = dialog.FileName if result == WinForms.DialogResult.OK else None
         return file_path
     except:
         logger.exception('Error invoking {0} dialog'.format(dialog_type))
@@ -725,10 +717,9 @@ def create_file_dialog(dialog_type, directory, allow_multiple, save_filename, fi
 def get_current_url(uid):
     if is_cef:
         return CEF.get_current_url(uid)
-    else:
-        window = BrowserView.instances[uid]
-        window.loaded.wait()
-        return window.browser.url
+    window = BrowserView.instances[uid]
+    window.loaded.wait()
+    return window.browser.url
 
 
 def load_url(url, uid):

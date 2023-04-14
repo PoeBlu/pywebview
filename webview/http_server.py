@@ -30,7 +30,7 @@ def _get_random_port():
             result = port
         except:
             result = None
-            logger.warning('Port %s is in use' % port)
+            logger.warning(f'Port {port} is in use')
         finally:
             sock.close()
 
@@ -47,8 +47,7 @@ class HTTPHandler(SimpleHTTPRequestHandler):
     def translate_path(self, path):
         path = SimpleHTTPRequestHandler.translate_path(self, path)
         relpath = os.path.relpath(path, os.getcwd())
-        fullpath = os.path.join(self.server.base_path, relpath)
-        return fullpath
+        return os.path.join(self.server.base_path, relpath)
 
     def log_message(self, format, *args):
         if os.environ.get('PYWEBVIEW_LOG') == 'debug':
@@ -68,7 +67,7 @@ def start_server(url):
 
     base_path = os.path.dirname(url.replace('file://', ''))
     if not os.path.exists(base_path):
-        raise IOError('Directory %s is not found' % base_path)
+        raise IOError(f'Directory {base_path} is not found')
 
     port = _get_random_port()
     server_address = ('localhost', port)

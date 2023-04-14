@@ -29,7 +29,7 @@ def run_test(webview, window, thread_func=None, param=None, start_args={}, no_de
 
 
 def assert_js(window, func_name, expected_result, func_param=None):
-    value_id = 'v' + uuid4().hex[:8]
+    value_id = f'v{uuid4().hex[:8]}'
     func_param = json.dumps(func_param)
 
     execute_func = """
@@ -49,10 +49,9 @@ def assert_js(window, func_name, expected_result, func_param=None):
     while result is None:
         if counter == MAX:
             raise AssertionError('assert_js timeout')
-        else:
-            counter += 1
-            time.sleep(0.1)
-            result = window.evaluate_js(check_func)
+        counter += 1
+        time.sleep(0.1)
+        result = window.evaluate_js(check_func)
 
     assert expected_result == result
 
